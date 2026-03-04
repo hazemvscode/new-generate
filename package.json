@@ -1,1 +1,1 @@
-{\n  \"dependencies\": {\n    \"@napi-rs/canvas\": \"latest\"\n  },\n  \"engines\": {\n    \"node\": \">=18 <23\"\n  }\n}
+{"name": "your-package-name","version": "1.0.0","description": "Your package description","main": "index.js","scripts": {"start": "node downloadFont.js && node index.js"},"author": "Your Name","license": "ISC"}
