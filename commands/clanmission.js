@@ -157,22 +157,20 @@ module.exports = {
     missions.forEach((m, i) => {
       const header = `M${i + 1} - ${m && m.toLowerCase() !== 'skip' ? m : '(skipped)'}`;
       if (!m || m.toLowerCase() === 'skip') {
+        // Skipped mission: just show header
         reply += `${header}\n\n`;
         return;
       }
 
       const opsList = results[m] && results[m].length ? results[m] : [];
       if (opsList.length === 0) {
-        reply += `${header}:\nNo operators\n\n`;
+        reply += `${header}\n- No operators\n\n`;
         return;
       }
 
-      // Pretty list without numbers
-      reply += `${header}:\n`;
-      opsList.forEach(o => {
-        reply += `• ${o.op}\n`;
-      });
-      reply += `\n`;
+      // Compact inline list, no numbers
+      const names = opsList.map(o => o.op).join(' , ');
+      reply += `${header}\n- ${names}\n\n`;
     });
 
     try {
