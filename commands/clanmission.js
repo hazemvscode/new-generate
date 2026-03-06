@@ -80,7 +80,7 @@ module.exports = {
     .setName("clanmission")
     .setDescription("Pick missions and get best operators placement for your clan")
     .addStringOption(option => {
-      option.setName("m1").setDescription("Mission 1").setRequired(true);
+      option.setName("m1").setDescription("Mission 1").setRequired(false);
       missionChoices.forEach(choice => option.addChoices(choice));
       return option;
     })

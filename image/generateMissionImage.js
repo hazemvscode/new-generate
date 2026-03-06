@@ -242,6 +242,22 @@ function textHeightSafe(px) {
   return px;
 }
 
+function splitNameForLabel(name) {
+  const t = String(name || '').trim().toUpperCase();
+  if (!t) return [''];
+  if (t.includes(' ')) {
+    const parts = t.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return [parts[0], parts.slice(1).join(' ')];
+    }
+  }
+  if (t.length > 6) {
+    const mid = Math.ceil(t.length / 2);
+    return [t.slice(0, mid), t.slice(mid)];
+  }
+  return [t];
+}
+
 function normalizeKey(name) {
   if (!name) return '';
   return String(name).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -472,7 +488,7 @@ module.exports = async function generateMissionImage(missions = []) {
 
       // Name label (ALWAYS drawn)
       const labelPaddingX = 6;
-      const labelHeight = 32;
+      const labelHeight = 36;
       const labelX = opX + 4;
       const labelY = opY + opTileHeight - labelHeight - 6;
       const labelW = opTileWidth - 8;
@@ -483,17 +499,34 @@ module.exports = async function generateMissionImage(missions = []) {
 
       ctx.fillStyle = '#FFFFFF';
       const opNameText = String(op.name || '').trim();
-      // Fill the label area as much as possible while staying inside it.
-      let opNamePx = Math.min(24, labelHeight - 4);
+      const labelLines = splitNameForLabel(opNameText);
       const opNameMaxW = labelW - (labelPaddingX * 2);
-      const opNameMaxH = labelHeight - 4;
-      while (
-        opNamePx > 10 &&
-        (textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW || textHeightSafe(opNamePx) > opNameMaxH)
-      ) {
-        opNamePx -= 1;
+      if (labelLines.length === 1) {
+        // Single-line: fill the label area as much as possible while staying inside it.
+        let opNamePx = Math.min(24, labelHeight - 4);
+        const opNameMaxH = labelHeight - 4;
+        while (
+          opNamePx > 10 &&
+          (textWidthSafe(ctx, labelLines[0], opNamePx, 'bold') > opNameMaxW || textHeightSafe(opNamePx) > opNameMaxH)
+        ) {
+          opNamePx -= 1;
+        }
+        drawTextSafe(ctx, labelLines[0], labelX + labelW / 2, labelY + labelHeight / 2, { px: opNamePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
+      } else {
+        // Two-line for long names, so each line can stay bigger and readable.
+        let linePx = 16;
+        while (
+          linePx > 10 &&
+          (
+            textWidthSafe(ctx, labelLines[0], linePx, 'bold') > opNameMaxW ||
+            textWidthSafe(ctx, labelLines[1], linePx, 'bold') > opNameMaxW
+          )
+        ) {
+          linePx -= 1;
+        }
+        drawTextSafe(ctx, labelLines[0], labelX + labelW / 2, labelY + Math.floor(labelHeight * 0.33), { px: linePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
+        drawTextSafe(ctx, labelLines[1], labelX + labelW / 2, labelY + Math.floor(labelHeight * 0.75), { px: linePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
       }
-      drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: opNamePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
       console.log('DREW OP NAME:', opNameText);
 
       opCount++;
