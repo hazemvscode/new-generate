@@ -16,25 +16,37 @@ const registerFont = usingNapi && CanvasLib.GlobalFonts && typeof CanvasLib.Glob
       try {
         const ok = CanvasLib.GlobalFonts.registerFromPath(p, opts && opts.family ? opts.family : undefined);
         console.log('GlobalFonts.registerFromPath', ok ? 'ok' : 'failed', '=>', p, opts && opts.family);
+        return !!ok;
       } catch (e) {
         console.log('GlobalFonts error:', e && e.message);
+        return false;
       }
     }
-  : require('canvas').registerFont;
+  : (p, opts) => {
+      try {
+        require('canvas').registerFont(p, opts || {});
+        return true;
+      } catch (e) {
+        console.log('registerFont fallback error:', e && e.message);
+        return false;
+      }
+    };
 
 const operatorImages = require('../operatorImages');
 
 // Explicitly register Roboto for Railway reliability
+const registeredFamilies = new Set();
 try {
   const robotoPath = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
-  registerFont(robotoPath, { family: 'Roboto' });
-  console.log('Font exists (Roboto):', fs.existsSync(robotoPath), '=>', robotoPath);
+  const exists = fs.existsSync(robotoPath);
+  const ok = exists ? registerFont(robotoPath, { family: 'Roboto' }) : false;
+  if (ok) registeredFamilies.add('Roboto');
+  console.log('Font exists (Roboto):', exists, 'register:', ok, '=>', robotoPath);
 } catch (e) {
   console.log('Failed to register Roboto font:', e && e.message);
 }
 
 // Also scan bundled fonts as fallback
-const registeredFamilies = new Set(['Roboto']);
 const scanFontDirs = [path.join(__dirname, '..', 'fonts'), path.join(__dirname, '..', 'assets', 'fonts')];
 for (const fontsDir of scanFontDirs) {
   try {
@@ -47,9 +59,11 @@ for (const fontsDir of scanFontDirs) {
                     .replace(/-?(Bold|Regular|Italic|Medium|SemiBold|Light|Black|ExtraBold)$/i, '')
                     .replace(/[^a-z0-9]/gi, '');
       try {
-        registerFont(full, { family });
-        registeredFamilies.add(family);
-        console.log('Registered font:', full, 'as', family);
+        const ok = registerFont(full, { family });
+        if (ok) {
+          registeredFamilies.add(family);
+          console.log('Registered font:', full, 'as', family);
+        }
       } catch (e) {
         console.log('Failed to register font', full, e && e.message);
       }
@@ -66,7 +80,7 @@ function fontOrFallback(px, weight) {
   if (fontFamily) {
     return `${weight ? weight + ' ' : ''}${px}px "${fontFamily}"`;
   }
-  return `${weight ? weight + ' ' : ''}${px}px Sans`;
+  return `${weight ? weight + ' ' : ''}${px}px sans-serif`;
 }
 
 function normalizeKey(name) {
