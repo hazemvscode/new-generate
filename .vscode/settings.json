@@ -1,3 +1,8 @@
+<<<<<<< HEAD
 {
     "codium.codeCompletion.enable": false
+=======
+{
+    "codium.codeCompletion.enable": false
+>>>>>>> df937138b47da1c6a86d44e1910201a3a99db2be
 }
