@@ -7,6 +7,7 @@
   },
   "scripts": {
     "start": "node index.js",
+    "postinstall": "npm install --no-save @napi-rs/canvas-linux-x64-gnu || true",
     "fetch-font": "node downloadFont.js",
     "register-commands": "node deploy-commands.js",
     "test": "echo \"Error: no test specified\" && exit 1"
