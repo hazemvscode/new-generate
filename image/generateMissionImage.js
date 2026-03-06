@@ -302,18 +302,6 @@ module.exports = async function generateMissionImage(missions = []) {
   ctx.fillStyle = '#061C37';
   ctx.fillRect(0, 0, width, height);
 
-  // Optional production font test overlay (enable with FONT_DEBUG=1 or FONT_TEST=1)
-  try {
-    const showFontTest = process.env.FONT_DEBUG === '1' || process.env.FONT_TEST === '1';
-    if (showFontTest) {
-      ctx.fillStyle = '#FFFFFF';
-      drawTextSafe(ctx, 'TEXT TEST', 50, 50, { px: 30, weight: 'bold', color: '#FFFFFF', align: 'left', baseline: 'alphabetic' });
-      console.log('DREW FONT TEST OVERLAY');
-    }
-  } catch (e) {
-    console.log('Font test overlay error:', e && e.message);
-  }
-
   // ===== HEADER (always drawn outside loops) =====
   drawTextSafe(ctx, 'TACTIOPBOT', width / 2, 60, { px: 56, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
   console.log('DREW HEADER: TACTIOPBOT');
@@ -414,7 +402,8 @@ module.exports = async function generateMissionImage(missions = []) {
     const hasOps = Array.isArray(mission.operators) && mission.operators.length > 0;
 
     if (isSkip) {
-      drawTextSafe(ctx, 'SKIPPED', cardX + cardWidth / 2, cardY + Math.max(100, cardHeight / 2), { px: 24, weight: 'bold', color: '#FF6B6B', align: 'center', baseline: 'middle' });
+      // Keep SKIPPED centered inside the skip card.
+      drawTextSafe(ctx, 'SKIPPED', cardX + cardWidth / 2, cardY + Math.floor(cardHeight / 2), { px: 24, weight: 'bold', color: '#FF6B6B', align: 'center', baseline: 'middle' });
       y = cardY + cardHeight + 30;
       continue;
     }
@@ -481,14 +470,9 @@ module.exports = async function generateMissionImage(missions = []) {
 
       ctx.fillStyle = '#FFFFFF';
       const opNameText = String(op.name || '').trim();
-      let display = opNameText;
-      const maxW = labelW - labelPaddingX * 2;
-      while (textWidthSafe(ctx, display, 14, 'bold') > maxW && display.length > 0) {
-        display = display.slice(0, -1);
-      }
-      if (display !== opNameText && display.length > 3) display = display.slice(0, -3) + '...';
-      drawTextSafe(ctx, display, labelX + labelW / 2, labelY + labelHeight / 2, { px: 14, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
-      console.log('DREW OP NAME:', opNameText, '=>', display);
+      // Draw full operator name without truncation.
+      drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: 10, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
+      console.log('DREW OP NAME:', opNameText);
 
       opCount++;
       opX += opTileWidth + 15;
