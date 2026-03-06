@@ -383,10 +383,15 @@ module.exports = async function generateMissionImage(missions = []) {
     ctx.stroke();
 
     // Mission title
-    // Draw sequential slot label for selected missions (M1..Mn)
+    // Draw sequential slot label for selected missions (M1..Mn), auto-fit inside card width.
     const missionText = String(mission.name || '').trim();
     const slotLabel = `M${slotIndex + 1} - ${missionText}`;
-    drawTextSafe(ctx, slotLabel, cardX + cardPadding, cardY + 46, { px: 36, weight: 'bold', color: '#FFFFFF', align: 'left', baseline: 'alphabetic' });
+    let missionTitlePx = 28;
+    const missionMaxW = cardWidth - (cardPadding * 2);
+    while (missionTitlePx > 12 && textWidthSafe(ctx, slotLabel, missionTitlePx, 'bold') > missionMaxW) {
+      missionTitlePx -= 2;
+    }
+    drawTextSafe(ctx, slotLabel, cardX + cardPadding, cardY + 44, { px: missionTitlePx, weight: 'bold', color: '#FFFFFF', align: 'left', baseline: 'alphabetic' });
     console.log('DREW MISSION:', slotLabel);
 
     // Accent line
