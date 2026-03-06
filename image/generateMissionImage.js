@@ -234,6 +234,14 @@ function textWidthSafe(ctx, text, px, weight = 'bold') {
   return ctx.measureText(String(text || '')).width;
 }
 
+function textHeightSafe(px) {
+  if (!fontFamily) {
+    const scale = Math.max(1, Math.ceil(px / 10));
+    return 7 * scale;
+  }
+  return px;
+}
+
 function normalizeKey(name) {
   if (!name) return '';
   return String(name).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -475,10 +483,14 @@ module.exports = async function generateMissionImage(missions = []) {
 
       ctx.fillStyle = '#FFFFFF';
       const opNameText = String(op.name || '').trim();
-      // Keep names readable: start bigger and shrink only if needed.
-      let opNamePx = 16;
+      // Fill the label area as much as possible while staying inside it.
+      let opNamePx = Math.min(24, labelHeight - 4);
       const opNameMaxW = labelW - (labelPaddingX * 2);
-      while (opNamePx > 10 && textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW) {
+      const opNameMaxH = labelHeight - 4;
+      while (
+        opNamePx > 10 &&
+        (textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW || textHeightSafe(opNamePx) > opNameMaxH)
+      ) {
         opNamePx -= 1;
       }
       drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: opNamePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
