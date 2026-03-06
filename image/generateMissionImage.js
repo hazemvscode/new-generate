@@ -172,13 +172,13 @@ const BITMAP_FONT_5X7 = {
 };
 
 function bitmapTextWidth(text, px) {
-  const scale = Math.max(1, Math.floor(px / 7));
+  const scale = Math.max(1, Math.ceil(px / 10));
   const chars = String(text || '').toUpperCase().split('');
   return chars.length * (5 * scale + scale);
 }
 
 function drawBitmapText(ctx, text, x, y, px, color, align, baseline) {
-  const scale = Math.max(1, Math.floor(px / 7));
+  const scale = Math.max(1, Math.ceil(px / 10));
   const upper = String(text || '').toUpperCase();
   const totalW = bitmapTextWidth(upper, px);
   const totalH = 7 * scale;
@@ -464,7 +464,7 @@ module.exports = async function generateMissionImage(missions = []) {
 
       // Name label (ALWAYS drawn)
       const labelPaddingX = 6;
-      const labelHeight = 28;
+      const labelHeight = 30;
       const labelX = opX + 4;
       const labelY = opY + opTileHeight - labelHeight - 6;
       const labelW = opTileWidth - 8;
@@ -475,8 +475,13 @@ module.exports = async function generateMissionImage(missions = []) {
 
       ctx.fillStyle = '#FFFFFF';
       const opNameText = String(op.name || '').trim();
-      // Draw full operator name without truncation.
-      drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: 10, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
+      // Keep names readable: start bigger and shrink only if needed.
+      let opNamePx = 14;
+      const opNameMaxW = labelW - (labelPaddingX * 2);
+      while (opNamePx > 8 && textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW) {
+        opNamePx -= 1;
+      }
+      drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: opNamePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
       console.log('DREW OP NAME:', opNameText);
 
       opCount++;
