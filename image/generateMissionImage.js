@@ -464,7 +464,7 @@ module.exports = async function generateMissionImage(missions = []) {
 
       // Name label (ALWAYS drawn)
       const labelPaddingX = 6;
-      const labelHeight = 30;
+      const labelHeight = 32;
       const labelX = opX + 4;
       const labelY = opY + opTileHeight - labelHeight - 6;
       const labelW = opTileWidth - 8;
@@ -476,9 +476,9 @@ module.exports = async function generateMissionImage(missions = []) {
       ctx.fillStyle = '#FFFFFF';
       const opNameText = String(op.name || '').trim();
       // Keep names readable: start bigger and shrink only if needed.
-      let opNamePx = 14;
+      let opNamePx = 16;
       const opNameMaxW = labelW - (labelPaddingX * 2);
-      while (opNamePx > 8 && textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW) {
+      while (opNamePx > 10 && textWidthSafe(ctx, opNameText, opNamePx, 'bold') > opNameMaxW) {
         opNamePx -= 1;
       }
       drawTextSafe(ctx, opNameText, labelX + labelW / 2, labelY + labelHeight / 2, { px: opNamePx, weight: 'bold', color: '#FFFFFF', align: 'center', baseline: 'middle' });
