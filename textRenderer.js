@@ -20,28 +20,36 @@ const registerFont = usingNapi && CanvasLib.GlobalFonts && typeof CanvasLib.Glob
       try {
         const ok = CanvasLib.GlobalFonts.registerFromPath(p, family);
         console.log('[textRenderer] GlobalFonts.registerFromPath', ok ? 'ok' : 'failed', '=>', p, family);
+        return !!ok;
       } catch (e) {
         console.log('[textRenderer] GlobalFonts error:', e && e.message);
+        return false;
       }
     }
   : (p, opts) => {
       try {
         require('canvas').registerFont(p, opts || {});
         console.log('[textRenderer] node-canvas.registerFont ok =>', p, opts && opts.family);
+        return true;
       } catch (e) {
         console.log('[textRenderer] node-canvas.registerFont error:', e && e.message);
+        return false;
       }
     };
 
 // Register Roboto font from repo
+let activeFamily = null;
 (function ensureRoboto() {
   const roboto = path.join(__dirname, 'assets', 'fonts', 'Roboto-Regular.ttf');
-  registerFont(roboto, usingNapi ? 'Roboto' : { family: 'Roboto' });
-  console.log('[textRenderer] Font exists (Roboto):', fs.existsSync(roboto), '=>', roboto);
+  const exists = fs.existsSync(roboto);
+  const ok = exists ? registerFont(roboto, usingNapi ? 'Roboto' : { family: 'Roboto' }) : false;
+  if (ok) activeFamily = 'Roboto';
+  console.log('[textRenderer] Font exists (Roboto):', exists, 'register:', ok, '=>', roboto);
 })();
 
 function fontString(size, weight) {
-  return `${weight ? weight + ' ' : ''}${size}px "Roboto"`;
+  if (activeFamily) return `${weight ? weight + ' ' : ''}${size}px "${activeFamily}"`;
+  return `${weight ? weight + ' ' : ''}${size}px sans-serif`;
 }
 
 async function addTextToImage(imagePath, text, options = {}) {
