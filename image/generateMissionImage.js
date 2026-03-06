@@ -45,13 +45,37 @@ const operatorImages = require('../operatorImages');
 
 // Explicitly register Roboto for Railway reliability
 const registeredFamilies = new Set();
+function tryRegisterFontPath(fontPath, family) {
+  try {
+    if (!canvasBackendAvailable) return false;
+    if (!fs.existsSync(fontPath)) return false;
+    const ok = registerFont(fontPath, { family });
+    if (ok) {
+      registeredFamilies.add(family);
+      console.log('Registered font:', fontPath, 'as', family);
+      return true;
+    }
+  } catch (e) {
+    console.log('Failed to register candidate font', fontPath, e && e.message);
+  }
+  return false;
+}
+
 try {
   if (!canvasBackendAvailable) throw new Error('canvas backend unavailable');
-  const robotoPath = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
-  const exists = fs.existsSync(robotoPath);
-  const ok = exists ? registerFont(robotoPath, { family: 'Roboto' }) : false;
-  if (ok) registeredFamilies.add('Roboto');
-  console.log('Font exists (Roboto):', exists, 'register:', ok, '=>', robotoPath);
+  const candidateFonts = [
+    { p: path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf'), family: 'Roboto' },
+    { p: path.join(__dirname, '..', 'fonts', 'Roboto-Regular.ttf'), family: 'Roboto' },
+    { p: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', family: 'DejaVuSans' },
+    { p: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', family: 'DejaVuSans' },
+    { p: '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', family: 'LiberationSans' },
+    { p: '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf', family: 'LiberationSans' },
+    { p: '/usr/share/fonts/TTF/DejaVuSans.ttf', family: 'DejaVuSans' },
+  ];
+
+  for (const c of candidateFonts) {
+    tryRegisterFontPath(c.p, c.family);
+  }
 } catch (e) {
   console.log('Failed to register Roboto font:', e && e.message);
 }
@@ -70,11 +94,7 @@ for (const fontsDir of scanFontDirs) {
                     .replace(/-?(Bold|Regular|Italic|Medium|SemiBold|Light|Black|ExtraBold)$/i, '')
                     .replace(/[^a-z0-9]/gi, '');
       try {
-        const ok = registerFont(full, { family });
-        if (ok) {
-          registeredFamilies.add(family);
-          console.log('Registered font:', full, 'as', family);
-        }
+        tryRegisterFontPath(full, family);
       } catch (e) {
         console.log('Failed to register font', full, e && e.message);
       }
@@ -85,7 +105,14 @@ for (const fontsDir of scanFontDirs) {
 }
 
 // Prefer Roboto if available
-let fontFamily = registeredFamilies.has('Roboto') ? 'Roboto' : (registeredFamilies.size > 0 ? Array.from(registeredFamilies)[0] : null);
+let fontFamily = registeredFamilies.has('Roboto')
+  ? 'Roboto'
+  : (registeredFamilies.has('DejaVuSans')
+      ? 'DejaVuSans'
+      : (registeredFamilies.has('LiberationSans')
+          ? 'LiberationSans'
+          : (registeredFamilies.size > 0 ? Array.from(registeredFamilies)[0] : null)));
+console.log('Active font family for drawing:', fontFamily || 'system sans-serif fallback');
 
 function fontOrFallback(px, weight) {
   if (fontFamily) {

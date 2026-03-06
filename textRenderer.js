@@ -40,11 +40,26 @@ const registerFont = usingNapi && CanvasLib.GlobalFonts && typeof CanvasLib.Glob
 // Register Roboto font from repo
 let activeFamily = null;
 (function ensureRoboto() {
-  const roboto = path.join(__dirname, 'assets', 'fonts', 'Roboto-Regular.ttf');
-  const exists = fs.existsSync(roboto);
-  const ok = exists ? registerFont(roboto, usingNapi ? 'Roboto' : { family: 'Roboto' }) : false;
-  if (ok) activeFamily = 'Roboto';
-  console.log('[textRenderer] Font exists (Roboto):', exists, 'register:', ok, '=>', roboto);
+  const candidates = [
+    { p: path.join(__dirname, 'assets', 'fonts', 'Roboto-Regular.ttf'), family: 'Roboto' },
+    { p: path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), family: 'Roboto' },
+    { p: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', family: 'DejaVuSans' },
+    { p: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', family: 'DejaVuSans' },
+    { p: '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', family: 'LiberationSans' },
+    { p: '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf', family: 'LiberationSans' },
+    { p: '/usr/share/fonts/TTF/DejaVuSans.ttf', family: 'DejaVuSans' }
+  ];
+
+  for (const c of candidates) {
+    try {
+      const exists = fs.existsSync(c.p);
+      const ok = exists ? registerFont(c.p, usingNapi ? c.family : { family: c.family }) : false;
+      console.log('[textRenderer] Font candidate:', c.family, 'exists:', exists, 'register:', ok, '=>', c.p);
+      if (ok && !activeFamily) activeFamily = c.family;
+    } catch (e) {
+      console.log('[textRenderer] Font candidate error:', c.p, e && e.message);
+    }
+  }
 })();
 
 function fontString(size, weight) {
