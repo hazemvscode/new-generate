@@ -2,15 +2,24 @@ const path = require('path');
 const fs = require('fs');
 let CanvasLib;
 let usingNapi = false;
+let canvasBackendAvailable = false;
 try {
   CanvasLib = require('@napi-rs/canvas');
   usingNapi = true;
+  canvasBackendAvailable = true;
   console.log('Using @napi-rs/canvas for rendering');
 } catch (e) {
-  CanvasLib = require('canvas');
-  console.log('Using node-canvas for rendering');
+  try {
+    CanvasLib = require('canvas');
+    canvasBackendAvailable = true;
+    console.log('Using node-canvas for rendering');
+  } catch (e2) {
+    canvasBackendAvailable = false;
+    console.log('No canvas backend available (@napi-rs/canvas or canvas). Image generation disabled.');
+  }
 }
-const { createCanvas, loadImage } = CanvasLib;
+const createCanvas = canvasBackendAvailable ? CanvasLib.createCanvas : null;
+const loadImage = canvasBackendAvailable ? CanvasLib.loadImage : null;
 const registerFont = usingNapi && CanvasLib.GlobalFonts && typeof CanvasLib.GlobalFonts.registerFromPath === 'function'
   ? (p, opts) => {
       try {
@@ -37,6 +46,7 @@ const operatorImages = require('../operatorImages');
 // Explicitly register Roboto for Railway reliability
 const registeredFamilies = new Set();
 try {
+  if (!canvasBackendAvailable) throw new Error('canvas backend unavailable');
   const robotoPath = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
   const exists = fs.existsSync(robotoPath);
   const ok = exists ? registerFont(robotoPath, { family: 'Roboto' }) : false;
@@ -50,6 +60,7 @@ try {
 const scanFontDirs = [path.join(__dirname, '..', 'fonts'), path.join(__dirname, '..', 'assets', 'fonts')];
 for (const fontsDir of scanFontDirs) {
   try {
+    if (!canvasBackendAvailable) continue;
     if (!fs.existsSync(fontsDir)) continue;
     const files = fs.readdirSync(fontsDir);
     for (const f of files) {
@@ -106,6 +117,10 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 }
 
 module.exports = async function generateMissionImage(missions = []) {
+  if (!canvasBackendAvailable || !createCanvas || !loadImage) {
+    throw new Error('Image rendering backend not available on this host');
+  }
+
   // Configuration
   const width = 1200;
   const opsPerRow = 5;
